@@ -1,0 +1,55 @@
+version: '3.1'
+
+services:
+
+  teapot-store-app:
+    container_name: teapot-store-app
+    build:
+      dockerfile: ./app/Dockerfile 
+    volumes:
+      - ./../src:/var/www/public
+      - ./app/php.ini:/usr/local/etc/php/php.ini
+    environment:
+      DB_HOST: ${DB_HOST}
+      DB_USER: ${DB_USER}
+      DB_PASSWORD: ${DB_PASSWORD}
+      DB_NAME: ${DB_NAME}
+    networks:
+      - teapot-store-net
+    depends_on:
+      - teapot-store-db
+    expose: 
+    - "9000"
+
+  teapot-store-webserver:
+    container_name: teapot-store-webserver
+    image: nginx:latest
+    volumes:
+      - ./../src:/var/www/public
+      - ./server/conf.d/:/etc/nginx/conf.d/
+    ports:
+      - 8080:80
+      - 443:443
+    networks:
+      - teapot-store-net
+    depends_on:
+      - teapot-store-app
+
+  teapot-store-db:
+    container_name: teapot-store-db
+    image: mysql:latest
+    environment:
+      MYSQL_DATABASE: ${DB_NAME}
+      MYSQL_USER: ${DB_USER}
+      MYSQL_PASSWORD: ${DB_PASSWORD}
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+    volumes:
+      - ./../teapot-store_db:/var/lib/mysql
+    networks:
+      - teapot-store-net
+    ports:
+      - "3306:3306"
+
+networks:
+  teapot-store-net:
+    driver: bridge
